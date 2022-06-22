@@ -1,7 +1,11 @@
-import express, { response } from "express";
-import bcrypt, { hash } from "bcrypt-nodejs";
+import express from "express";
+import bcrypt from "bcrypt-nodejs";
 import cors from "cors";
 import knex from "knex";
+import register from "./controllers/register.js";
+import signin from "./controllers/signin.js";
+import profile from "./controllers/profile.js";
+import image from "./controllers/image.js";
 
 const postgres = knex({
     client: 'pg',
@@ -28,77 +32,17 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post('/signin', (req, res) => {
-    postgres.select('email', 'hash').from('login')
-    .where('email', '=', req.body.email)
-    .then(data => {
-        const isValid = bcrypt.compareSync(req.body.password, data[0].hash);
-        if (isValid) {
-            return postgres.select('*').from('users')
-            .where('email', '=', req.body.email)
-            .then(user => {
-                res.json(user[0])
-            })
-            .catch(err => res.status(400).json('unable to get user'))
-        } else {
-            res.status(400).json('wrong credentials')
-        }
-    })
-    .catch(err => res.status(400).json('wrong credentials'));
-});
+app.post('/signin', 
+(req, res) => {signin(req, res, postgres, bcrypt)});
 
-app.post('/register', (req, res) => {
-    const { email, password, name} = req.body;
-    const hash = bcrypt.hashSync(password);
-    postgres.transaction(trx => {
-        trx.insert({
-            hash: hash,
-            email: email
-        })
-        .into('login')
-        .returning('email')
-        .then(loginEmail => {
-            return trx('users')
-            .returning('*')
-            .insert({
-                email: loginEmail[0].email,
-                name: name,
-                joined: new Date()
-            })
-            .then(user => {
-                res.json(user);
-            })
-            .catch(err => res.status(400).json('unable to register'));
-        })
-        .then(trx.commit)
-        .catch(trx.rollback);
-    })
-});
+app.post('/register', 
+(req, res) => {register(req, res, bcrypt, postgres)});
 
-app.get('/profile/:id', (req, res)=> {
-    const { id } = req.params;
+app.get('/profile/:id', 
+(req, res) => {profile(req, res, postgres)});
 
-    postgres.select('*').from('users').where({id})
-    .then(user => {
-        if (user.length) {
-            res.json(user[0]);
-        } else {
-            res.status(400).json('Not Found');
-        }
-    })
-    .catch(err => res.status(400).json('error getting user'));
-});
-
-app.put('/image', (req, res) => {
-    const { id } = req.body;
-    postgres('users').where('id', '=', id)
-    .increment('entries', 1)
-    .returning('entries')
-    .then(entries => {
-        res.json(entries[0].entries)
-    })
-    .catch(err => res.status(400).json('unable to get entries'));
-});
+app.put('/image', 
+(req, res) => {image(req, res, postgres)});
 
 
 app.listen(3001, () => {
