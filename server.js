@@ -11,7 +11,10 @@ const port = process.env.PORT || 3000
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0; 
 
-const whitelist = ["http://localhost:3000"]
+const domainsFromEnv = process.env.CORS_DOMAINS || ""
+
+const whitelist = domainsFromEnv.split(",").map(item => item.trim())
+
 const corsOptions = {
   origin: function (origin, callback) {
     if (!origin || whitelist.indexOf(origin) !== -1) {
