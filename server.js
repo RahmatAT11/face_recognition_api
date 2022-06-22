@@ -7,9 +7,21 @@ import signin from "./controllers/signin.js";
 import profile from "./controllers/profile.js";
 import image from "./controllers/image.js";
 
+const port = process.env.PORT || 3000
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0; 
 
+const whitelist = ["http://localhost:3000"]
+const corsOptions = {
+  origin: function (origin, callback) {
+    if (!origin || whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error("Not allowed by CORS"))
+    }
+  },
+  credentials: true,
+}
 
 const postgres = knex({
     client: 'pg',
@@ -32,7 +44,7 @@ const postgres = knex({
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "https://face-recognition-rahmat.herokuapp.com/", credentials: true }));
+app.use(cors(corsOptions));
 
 app.get('/', 
 (req, res) => {res.send('app is working')});
@@ -50,6 +62,6 @@ app.put('/image',
 (req, res) => {image(req, res, postgres)});
 
 
-app.listen(process.env.PORT || 3001, () => {
-    console.log(`app is running on port ${process.env.PORT}`);
+app.listen(port, () => {
+    console.log(`app is running on port ${port}`);
 });
