@@ -32,6 +32,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+app.get('/', 
+(req, res) => {res.send('app is working')});
+
 app.post('/signin', 
 (req, res) => {signin(req, res, postgres, bcrypt)});
 
