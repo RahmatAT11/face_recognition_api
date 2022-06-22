@@ -34,7 +34,7 @@ const postgres = knex({
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "https://face-recognition-rahmat.herokuapp.com/", credentials: true }));
 
 app.get('/', 
 (req, res) => {res.send('app is working')});
